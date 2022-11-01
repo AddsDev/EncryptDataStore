@@ -1,5 +1,6 @@
 package dev.adds.encryptdatastore.preferences.user
 
+import android.content.Context
 import android.util.Log
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
@@ -21,18 +22,14 @@ class UserStorePreference constructor(
         val PREF_DATA = stringPreferencesKey("pref_data")
         val PREF_USER_ID = stringPreferencesKey("pref_user_id")
     }
-    override suspend fun updateTestDataEncrypt(value: String) {
-        dataStore.secureEdit(PREF_DATA.name, value) { preferences, encryptedValue ->
+    override suspend fun updateTestDataEncrypt(context: Context, value: String) {
+        dataStore.secureEdit(context,PREF_DATA.name, value) { preferences, encryptedValue ->
             preferences[PREF_DATA] = encryptedValue
         }
     }
 
     override val dataEncrypt: Flow<String> = dataStore.data.secureMap(PREF_DATA.name) {
-        val data = it[PREF_DATA].orEmpty()
-        val TAG = "SecurityUtil"
-        Log.i(TAG, "data: $data")
-        Log.i(TAG, "PREF_DATA.name: ${PREF_DATA.name}")
-        return@secureMap data
+        it[PREF_DATA].orEmpty()
     }
 
     suspend fun updateUserId(userId: String) {

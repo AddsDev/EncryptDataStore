@@ -8,6 +8,7 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStore
 import dev.adds.encryptdatastore.databinding.ActivityMainBinding
 import dev.adds.encryptdatastore.preferences.user.UserStorePreference
+import dev.adds.encryptdatastore.preferences.utils.AESUtil
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.last
 import kotlinx.coroutines.flow.map
@@ -18,7 +19,7 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
     private lateinit var userDataStore : UserStorePreference
-
+    private lateinit var map: HashMap<String, ByteArray>
     private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
 
 
@@ -35,13 +36,12 @@ class MainActivity : AppCompatActivity() {
         with(binding){
             btnEncrypt.setOnClickListener {
                 runBlocking {
-                    //userDataStore.updateTestDataEncrypt(tvEncrypt.text.toString())
-                    userDataStore.updateUserId(tvEncrypt.text.toString())
+                    userDataStore.updateTestDataEncrypt(this@MainActivity,tvEncrypt.text.toString())
                 }
             }
             btnDecrypt.setOnClickListener {
                 runBlocking {
-                    tvDescrypt.setText(userDataStore.userId.map { it }.first())
+                    tvDescrypt.setText(userDataStore.dataEncrypt.map { it }.first())
                 }
             }
         }
