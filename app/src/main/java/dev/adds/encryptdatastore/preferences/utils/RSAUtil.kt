@@ -5,42 +5,32 @@ import android.content.Context
 import android.os.Build
 import android.security.KeyPairGeneratorSpec
 import android.security.keystore.KeyGenParameterSpec
+import android.security.keystore.KeyProperties
 import android.security.keystore.KeyProperties.*
 import android.util.Base64
 import android.util.Log
 import java.math.BigInteger
-import java.security.GeneralSecurityException
-import java.security.KeyPair
-import java.security.KeyPairGenerator
-import java.security.KeyStore
+import java.security.*
 import java.security.KeyStore.Entry
 import java.security.KeyStore.PrivateKeyEntry
-import java.security.spec.RSAKeyGenParameterSpec
-import java.security.spec.RSAKeyGenParameterSpec.F4
 import java.util.*
 import javax.crypto.Cipher
 import javax.security.auth.x500.X500Principal
 import kotlin.math.abs
 
-class RSAUtil(private val context: Context,private val keyAlias: String) {
+object RSAUtil{
 
-    companion object {
-        private const val TAG = "SecurityUtil"
-    }
+    private const val TAG = "SecurityUtil"
 
-    private val provider = "AndroidKeyStore"
+    private const val provider = "AndroidKeyStore"
     private val cipher by lazy {
-        Cipher.getInstance("${KEY_ALGORITHM_RSA}/NONE/${ENCRYPTION_PADDING_RSA_PKCS1}")
-    }
-
-    init {
-        createKeys(context, keyAlias)
+        Cipher.getInstance("RSA/ECB/OAEPWithSHA-256AndMGF1Padding")
     }
 
     /**
      * Create a private and public key and store
      */
-    private fun createKeys(context: Context, keyAlias: String) {
+    fun createKeys(context: Context, keyAlias: String) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
             createKeysM(keyAlias, false)
         else
@@ -76,19 +66,14 @@ class RSAUtil(private val context: Context,private val keyAlias: String) {
     private fun createKeysM(alias: String, auth: Boolean): KeyPair {
         val keyPairGenerator = KeyPairGenerator.getInstance(KEY_ALGORITHM_RSA, provider)
         keyPairGenerator.initialize(
-            KeyGenParameterSpec.Builder(
-                alias,
-                PURPOSE_ENCRYPT or PURPOSE_DECRYPT
-            )
-                .setAlgorithmParameterSpec(RSAKeyGenParameterSpec(4096, F4))
-                .setBlockModes(BLOCK_MODE_CBC)
-                .setEncryptionPaddings(ENCRYPTION_PADDING_RSA_PKCS1)
-                .setDigests(DIGEST_SHA256)
-                .setUserAuthenticationRequired(auth)
+            KeyGenParameterSpec.Builder(alias, PURPOSE_ENCRYPT or PURPOSE_DECRYPT)
+                .setDigests(DIGEST_SHA256, DIGEST_SHA512)
+                .setEncryptionPaddings(ENCRYPTION_PADDING_RSA_OAEP)
                 .build()
         )
         return keyPairGenerator.generateKeyPair().apply {
             Log.d(TAG, "Public Key is: " + this.public.toString());
+            Log.d(TAG, "Public Key is: " + keyPairGenerator.algorithm.toString())
         }
 
     }
@@ -153,4 +138,14 @@ class RSAUtil(private val context: Context,private val keyAlias: String) {
             Log.wtf(TAG, ex)
             "\"Decrypt Error\""
         }
+
+    fun createStringFromSize(alias: String, size: Int): String {
+        var newString = alias
+
+        while(newString.toByteArray().size - 11 < size - 11){
+            newString += "b".repeat(1)
+        }
+
+        return newString
+    }
 }

@@ -1,6 +1,9 @@
 package dev.adds.encryptdatastore.preferences.utils
 
 import android.security.keystore.KeyProperties.*
+import android.util.Log
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import java.security.KeyStore
 import java.security.SecureRandom
 import javax.crypto.Cipher
@@ -9,6 +12,9 @@ import javax.crypto.spec.IvParameterSpec
 import javax.crypto.spec.PBEKeySpec
 import javax.crypto.spec.SecretKeySpec
 
+/**
+ * AES Algorithms for API 21+
+ */
 class AESUtil {
     companion object {
         private const val IV_VALUE = "XYZ1"
@@ -53,6 +59,12 @@ class AESUtil {
         val secKey = SecretKeySpec(keyBytes.generateSecret(pbKeySpec).encoded, KEY_ALGORITHM_AES)
 
         cipher.init(Cipher.ENCRYPT_MODE, secKey, IvParameterSpec(iv))
+
+        Log.i("SECURE_EDIT", "encrypt: ${Json.encodeToString(hashMapOf(
+            Pair(SALT_VALUE, salt),
+            Pair(IV_VALUE, iv),
+            Pair(ENC_VALUE, cipher.doFinal(dataToEncrypt))
+        )).toByteArray().size}")
         return hashMapOf(
             Pair(SALT_VALUE, salt),
             Pair(IV_VALUE, iv),
